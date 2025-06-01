@@ -677,7 +677,7 @@ class OpenAIModel(BaseModel):
         # Parameters unsupported by reasoning models
         unsupported_params = {
             'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
-            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens'
+            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate'
         }
         
         filtered_kwargs = {}
@@ -687,9 +687,11 @@ class OpenAIModel(BaseModel):
             else:
                 LOG.warning(f"Parameter '{key}' is not supported by reasoning model {self.model}, ignoring")
         
-        # For reasoning models, use max_completion_tokens instead of max_tokens
+        # For reasoning models, use max_completion_tokens instead of max_tokens/tokens_to_generate
         if 'tokens_to_generate' in kwargs:
             filtered_kwargs['max_completion_tokens'] = kwargs['tokens_to_generate']
+        elif 'max_tokens' in kwargs:
+            filtered_kwargs['max_completion_tokens'] = kwargs['max_tokens']
             
         return filtered_kwargs
 
