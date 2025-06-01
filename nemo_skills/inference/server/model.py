@@ -601,42 +601,27 @@ class OpenAIModel(BaseModel):
         if top_k != 0:
             raise ValueError("`top_k` is not supported by OpenAI API, please set it to default value `0`.")
 
-        # Check if model requires max_completion_tokens instead of max_tokens
-        # Reasoning models (o1, o3, o4 series) use max_completion_tokens
-        is_reasoning_model = (
-            self.model.startswith('o1') or 
-            self.model.startswith('o3') or 
-            self.model.startswith('o4')
-        )
-
         # preparing the requests jsonl file
         with open("requests.jsonl", "wt", encoding='utf-8') as fout:
             for idx, prompt in enumerate(prompts):
-                body = {
-                    "model": self.model,
-                    "messages": prompt,
-                    "temperature": temperature,
-                    "top_p": top_p,
-                    "presence_penalty": repetition_penalty,
-                    "seed": random_seed,
-                    "stop": stop_phrases,
-                    "logprobs": top_logprobs is not None,
-                    "top_logprobs": top_logprobs,
-                }
-                
-                # Use appropriate token parameter based on model type
-                if is_reasoning_model:
-                    body["max_completion_tokens"] = tokens_to_generate
-                else:
-                    body["max_tokens"] = tokens_to_generate
-                    
                 fout.write(
                     json.dumps(
                         {
                             "custom_id": f"{idx}",
                             "method": "POST",
                             "url": "/v1/chat/completions",
-                            "body": body,
+                            "body": {
+                                "model": self.model,
+                                "messages": prompt,
+                                "max_tokens": tokens_to_generate,
+                                "temperature": temperature,
+                                "top_p": top_p,
+                                "presence_penalty": repetition_penalty,
+                                "seed": random_seed,
+                                "stop": stop_phrases,
+                                "logprobs": top_logprobs is not None,
+                                "top_logprobs": top_logprobs,
+                            },
                         }
                     )
                     + "\n"
@@ -679,6 +664,35 @@ class OpenAIModel(BaseModel):
         """OpenAI doesn't support top-k, so not making any changes here."""
         pass
 
+    def _is_reasoning_model(self) -> bool:
+        """Check if the current model is an OpenAI reasoning model (o1 series)."""
+        reasoning_models = ['o1', 'o1-mini', 'o1-preview', 'o4-mini', 'o3-mini', 'o3']
+        return any(reasoning_model in self.model.lower() for reasoning_model in reasoning_models)
+
+    def _filter_reasoning_model_params(self, **kwargs) -> dict:
+        """Filter out unsupported parameters for OpenAI reasoning models."""
+        if not self._is_reasoning_model():
+            return kwargs
+        
+        # Parameters unsupported by reasoning models
+        unsupported_params = {
+            'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
+            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens'
+        }
+        
+        filtered_kwargs = {}
+        for key, value in kwargs.items():
+            if key not in unsupported_params:
+                filtered_kwargs[key] = value
+            else:
+                LOG.warning(f"Parameter '{key}' is not supported by reasoning model {self.model}, ignoring")
+        
+        # For reasoning models, use max_completion_tokens instead of max_tokens
+        if 'tokens_to_generate' in kwargs:
+            filtered_kwargs['max_completion_tokens'] = kwargs['tokens_to_generate']
+            
+        return filtered_kwargs
+
     def _generate_single(
         self,
         prompt: dict,
@@ -705,46 +719,29 @@ class OpenAIModel(BaseModel):
         retry_count = 0
         retry_delay = self.initial_retry_delay
 
-        # Check if model requires max_completion_tokens instead of max_tokens
-        # Reasoning models (o1, o3, o4 series) use max_completion_tokens
-        is_reasoning_model = (
-            self.model.startswith('o1') or 
-            self.model.startswith('o3') or 
-            self.model.startswith('o4')
-        )
-
         while True:
             try:
-                if is_reasoning_model:
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        temperature=temperature,
-                        top_p=top_p,
-                        max_completion_tokens=tokens_to_generate,
-                        presence_penalty=repetition_penalty,
-                        seed=random_seed,
-                        stop=stop_phrases,
-                        messages=prompt,
-                        logprobs=top_logprobs is not None,
-                        top_logprobs=top_logprobs,
-                        timeout=timeout,
-                        stream=stream,
-                    )
-                else:
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        temperature=temperature,
-                        top_p=top_p,
-                        max_tokens=tokens_to_generate,
-                        presence_penalty=repetition_penalty,
-                        seed=random_seed,
-                        stop=stop_phrases,
-                        messages=prompt,
-                        logprobs=top_logprobs is not None,
-                        top_logprobs=top_logprobs,
-                        timeout=timeout,
-                        stream=stream,
-                    )
+                # Prepare API parameters
+                api_params = {
+                    'model': self.model,
+                    'temperature': temperature,
+                    'top_p': top_p,
+                    'max_tokens': tokens_to_generate,
+                    'presence_penalty': repetition_penalty,
+                    'seed': random_seed,
+                    'stop': stop_phrases,
+                    'messages': prompt,
+                    'logprobs': top_logprobs is not None,
+                    'top_logprobs': top_logprobs,
+                    'timeout': timeout,
+                    'stream': stream,
+                    'tokens_to_generate': tokens_to_generate,  # Used for reasoning model conversion
+                }
+                
+                # Filter parameters for reasoning models
+                filtered_params = self._filter_reasoning_model_params(**api_params)
+                
+                response = self.client.chat.completions.create(**filtered_params)
                 break  # Success, exit the retry loop
             except openai.RateLimitError as e:
                 retry_count += 1
@@ -768,15 +765,8 @@ class OpenAIModel(BaseModel):
                 )
                 time.sleep(wait_time)
             except openai.BadRequestError as e:
-                # Handle different error message formats for different providers
-                try:
-                    msg = e.body['detail']
-                except (AttributeError, KeyError):
-                    # For standard OpenAI errors
-                    try:
-                        msg = e.body['error']['message'] if hasattr(e, 'body') and 'error' in e.body else str(e)
-                    except (AttributeError, KeyError):
-                        msg = str(e)
+                # this likely only works for Nvidia-hosted models
+                msg = e.body['detail']
                 # expected message:
                 # This model's maximum context length is N tokens.
                 # However, you requested X tokens (Y in the messages, Z in the completion).
@@ -785,36 +775,16 @@ class OpenAIModel(BaseModel):
                     numbers = re.findall(r"\d+", msg)
                     max_tokens = int(numbers[0]) - int(numbers[2])
                     LOG.warning("Reached max tokens! Reducing the number of tokens to generate to %d", max_tokens)
-                    if is_reasoning_model:
-                        response = self.client.chat.completions.create(
-                            model=self.model,
-                            temperature=temperature,
-                            top_p=top_p,
-                            max_completion_tokens=max_tokens,
-                            presence_penalty=repetition_penalty,
-                            seed=random_seed,
-                            stop=stop_phrases,
-                            messages=prompt,
-                            logprobs=top_logprobs is not None,
-                            top_logprobs=top_logprobs,
-                            timeout=timeout,
-                            stream=stream,
-                        )
-                    else:
-                        response = self.client.chat.completions.create(
-                            model=self.model,
-                            temperature=temperature,
-                            top_p=top_p,
-                            max_tokens=max_tokens,
-                            presence_penalty=repetition_penalty,
-                            seed=random_seed,
-                            stop=stop_phrases,
-                            messages=prompt,
-                            logprobs=top_logprobs is not None,
-                            top_logprobs=top_logprobs,
-                            timeout=timeout,
-                            stream=stream,
-                        )
+                    
+                    # Prepare retry parameters with reduced max_tokens
+                    retry_params = api_params.copy()
+                    retry_params['max_tokens'] = max_tokens
+                    retry_params['tokens_to_generate'] = max_tokens
+                    
+                    # Filter parameters for reasoning models
+                    filtered_retry_params = self._filter_reasoning_model_params(**retry_params)
+                    
+                    response = self.client.chat.completions.create(**filtered_retry_params)
                 else:
                     raise
             except AttributeError:

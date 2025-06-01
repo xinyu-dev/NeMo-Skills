@@ -17,11 +17,11 @@ initial_dependency: ${expname}-merge-data-nim
 # Define judge model server parameters
 generate_kwargs:
   # Model to be used for answer judgement
-  model: meta/llama-3.3-70b-instruct
+  model: gpt-4o-mini # meta/llama-3.3-70b-instruct
   # Server type to launch the model
   server_type: openai
   # NIM API endpoint
-  server_address: https://integrate.api.nvidia.com/v1
+  server_address: https://api.openai.com/v1 # https://integrate.api.nvidia.com/v1
   # Number of generated solutions per problem to judge
   num_random_seeds: ${num_random_seeds_to_generate}
 
@@ -46,12 +46,12 @@ stages:
     output_dir: ${directories.step-1-generate-solutions}
     input_file: ${input_file}
     # Arguments passed inside the generate context string (e.g., ++param=value)
-    inline_args: "++inference.tokens_to_generate=8192"
+    inline_args: "++inference.tokens_to_generate=8192 ++inference.temperature=1.0"
     # Arguments passed as kwargs to the pipeline function (e.g. generate())
     stage_kwargs:
-      model: deepseek-ai/deepseek-r1-distill-qwen-32b
+      model: o1-mini # deepseek-ai/deepseek-r1-distill-qwen-32b
       server_type: openai
-      server_address: https://integrate.api.nvidia.com/v1
+      server_address: https://api.openai.com/v1 # https://integrate.api.nvidia.com/v1
       num_random_seeds: ${num_random_seeds_to_generate}
 
   fill_majority_answer:
