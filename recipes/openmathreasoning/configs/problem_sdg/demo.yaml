@@ -58,7 +58,7 @@ stages:
     input_file: ${directories.step-1-extract-problems}/extracted-problems.jsonl
     modes: ['proof', 'mcq', 'binary', 'invalid']
     dependencies:
-      - extract_problems
+      - extract_problems # this must be run before this stage
     stage_kwargs: ${generate_kwargs}
 
   extract_answers:
@@ -92,6 +92,6 @@ stages:
       - merge_data
     # This script runs embedding model locally,
     # so if there're GPUs available, you can use them
-    # retrieve_similar_kwargs:
-    #   num_gpus: 1
+    retrieve_similar_kwargs:
+      num_gpus: 1
     stage_kwargs: ${generate_kwargs}
