@@ -677,7 +677,7 @@ class OpenAIModel(BaseModel):
         # Parameters unsupported by reasoning models
         unsupported_params = {
             'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
-            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate'
+            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate', 'stop'
         }
         
         filtered_kwargs = {}
