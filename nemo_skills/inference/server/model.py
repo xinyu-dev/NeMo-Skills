@@ -601,27 +601,42 @@ class OpenAIModel(BaseModel):
         if top_k != 0:
             raise ValueError("`top_k` is not supported by OpenAI API, please set it to default value `0`.")
 
+        # Check if model requires max_completion_tokens instead of max_tokens
+        # Reasoning models (o1, o3, o4 series) use max_completion_tokens
+        is_reasoning_model = (
+            self.model.startswith('o1') or 
+            self.model.startswith('o3') or 
+            self.model.startswith('o4')
+        )
+
         # preparing the requests jsonl file
         with open("requests.jsonl", "wt", encoding='utf-8') as fout:
             for idx, prompt in enumerate(prompts):
+                body = {
+                    "model": self.model,
+                    "messages": prompt,
+                    "temperature": temperature,
+                    "top_p": top_p,
+                    "presence_penalty": repetition_penalty,
+                    "seed": random_seed,
+                    "stop": stop_phrases,
+                    "logprobs": top_logprobs is not None,
+                    "top_logprobs": top_logprobs,
+                }
+                
+                # Use appropriate token parameter based on model type
+                if is_reasoning_model:
+                    body["max_completion_tokens"] = tokens_to_generate
+                else:
+                    body["max_tokens"] = tokens_to_generate
+                    
                 fout.write(
                     json.dumps(
                         {
                             "custom_id": f"{idx}",
                             "method": "POST",
                             "url": "/v1/chat/completions",
-                            "body": {
-                                "model": self.model,
-                                "messages": prompt,
-                                "max_tokens": tokens_to_generate,
-                                "temperature": temperature,
-                                "top_p": top_p,
-                                "presence_penalty": repetition_penalty,
-                                "seed": random_seed,
-                                "stop": stop_phrases,
-                                "logprobs": top_logprobs is not None,
-                                "top_logprobs": top_logprobs,
-                            },
+                            "body": body,
                         }
                     )
                     + "\n"
@@ -690,22 +705,46 @@ class OpenAIModel(BaseModel):
         retry_count = 0
         retry_delay = self.initial_retry_delay
 
+        # Check if model requires max_completion_tokens instead of max_tokens
+        # Reasoning models (o1, o3, o4 series) use max_completion_tokens
+        is_reasoning_model = (
+            self.model.startswith('o1') or 
+            self.model.startswith('o3') or 
+            self.model.startswith('o4')
+        )
+
         while True:
             try:
-                response = self.client.chat.completions.create(
-                    model=self.model,
-                    temperature=temperature,
-                    top_p=top_p,
-                    max_tokens=tokens_to_generate,
-                    presence_penalty=repetition_penalty,
-                    seed=random_seed,
-                    stop=stop_phrases,
-                    messages=prompt,
-                    logprobs=top_logprobs is not None,
-                    top_logprobs=top_logprobs,
-                    timeout=timeout,
-                    stream=stream,
-                )
+                if is_reasoning_model:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        temperature=temperature,
+                        top_p=top_p,
+                        max_completion_tokens=tokens_to_generate,
+                        presence_penalty=repetition_penalty,
+                        seed=random_seed,
+                        stop=stop_phrases,
+                        messages=prompt,
+                        logprobs=top_logprobs is not None,
+                        top_logprobs=top_logprobs,
+                        timeout=timeout,
+                        stream=stream,
+                    )
+                else:
+                    response = self.client.chat.completions.create(
+                        model=self.model,
+                        temperature=temperature,
+                        top_p=top_p,
+                        max_tokens=tokens_to_generate,
+                        presence_penalty=repetition_penalty,
+                        seed=random_seed,
+                        stop=stop_phrases,
+                        messages=prompt,
+                        logprobs=top_logprobs is not None,
+                        top_logprobs=top_logprobs,
+                        timeout=timeout,
+                        stream=stream,
+                    )
                 break  # Success, exit the retry loop
             except openai.RateLimitError as e:
                 retry_count += 1
@@ -729,8 +768,15 @@ class OpenAIModel(BaseModel):
                 )
                 time.sleep(wait_time)
             except openai.BadRequestError as e:
-                # this likely only works for Nvidia-hosted models
-                msg = e.body['detail']
+                # Handle different error message formats for different providers
+                try:
+                    msg = e.body['detail']
+                except (AttributeError, KeyError):
+                    # For standard OpenAI errors
+                    try:
+                        msg = e.body['error']['message'] if hasattr(e, 'body') and 'error' in e.body else str(e)
+                    except (AttributeError, KeyError):
+                        msg = str(e)
                 # expected message:
                 # This model's maximum context length is N tokens.
                 # However, you requested X tokens (Y in the messages, Z in the completion).
@@ -739,20 +785,36 @@ class OpenAIModel(BaseModel):
                     numbers = re.findall(r"\d+", msg)
                     max_tokens = int(numbers[0]) - int(numbers[2])
                     LOG.warning("Reached max tokens! Reducing the number of tokens to generate to %d", max_tokens)
-                    response = self.client.chat.completions.create(
-                        model=self.model,
-                        temperature=temperature,
-                        top_p=top_p,
-                        max_tokens=max_tokens,
-                        presence_penalty=repetition_penalty,
-                        seed=random_seed,
-                        stop=stop_phrases,
-                        messages=prompt,
-                        logprobs=top_logprobs is not None,
-                        top_logprobs=top_logprobs,
-                        timeout=timeout,
-                        stream=stream,
-                    )
+                    if is_reasoning_model:
+                        response = self.client.chat.completions.create(
+                            model=self.model,
+                            temperature=temperature,
+                            top_p=top_p,
+                            max_completion_tokens=max_tokens,
+                            presence_penalty=repetition_penalty,
+                            seed=random_seed,
+                            stop=stop_phrases,
+                            messages=prompt,
+                            logprobs=top_logprobs is not None,
+                            top_logprobs=top_logprobs,
+                            timeout=timeout,
+                            stream=stream,
+                        )
+                    else:
+                        response = self.client.chat.completions.create(
+                            model=self.model,
+                            temperature=temperature,
+                            top_p=top_p,
+                            max_tokens=max_tokens,
+                            presence_penalty=repetition_penalty,
+                            seed=random_seed,
+                            stop=stop_phrases,
+                            messages=prompt,
+                            logprobs=top_logprobs is not None,
+                            top_logprobs=top_logprobs,
+                            timeout=timeout,
+                            stream=stream,
+                        )
                 else:
                     raise
             except AttributeError:
