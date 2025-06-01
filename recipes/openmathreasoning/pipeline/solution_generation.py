@@ -30,7 +30,7 @@ def generate_solutions(cluster, expname, run_after, stage_config, **kwargs):
     generate(
         ctx=wrap_arguments(
             f"++input_file={input_file} "
-            # f"++prompt_config=generic/math " # openAI o4 models require prompt to tell the model give reasoning, othwersie it only outputs answer
+            # f"++prompt_config=generic/math " # openAI o4 models require prompt to tell the model give reasoning, othwersie it only outputs answer. See demo.yaml inline_args
             f"++inference.temperature=0.7 "
             f"{stage_config.get('inline_args', '')} "
         ),
