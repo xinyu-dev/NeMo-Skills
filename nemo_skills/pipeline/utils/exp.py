@@ -157,9 +157,6 @@ def get_executor(
 
     if cluster_config["executor"] == "local":
         env_vars["PYTHONUNBUFFERED"] = "1"  # this makes sure logs are streamed right away
-        # Use bridge network instead of host to avoid EC2 hostname issues
-        additional_docker_kwargs = {"entrypoint": "", "hostname": f"nemo-{job_name}"}
-        network_mode = cluster_config.get("docker_network_mode", "host")
         return DockerExecutor(
             container_image=container,
             packager=packager,
@@ -168,9 +165,9 @@ def get_executor(
             ntasks_per_node=1,
             # locally we are always asking for all GPUs to be able to select a subset with CUDA_VISIBLE_DEVICES
             num_gpus=-1 if gpus_per_node is not None else None,
-            network=network_mode,
+            network="host",
             env_vars=env_vars,
-            additional_kwargs=additional_docker_kwargs,
+            additional_kwargs={"entrypoint": ""},
         )
 
     if not heterogeneous:
