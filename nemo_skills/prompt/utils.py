@@ -203,13 +203,23 @@ class Prompt:
 
     def get_code_execution_args(self):
         """Returns the code execution arguments."""
-        return {
-            "code_begin": self.config.template.code_begin,
-            "code_end": self.config.template.code_end,
-            "code_output_begin": self.config.template.code_output_begin,
-            "code_output_end": self.config.template.code_output_end,
-            "code_output_format": self.config.template.code_output_format,
-        }
+        if self.config.template is not None:
+            return {
+                "code_begin": self.config.template.code_begin,
+                "code_end": self.config.template.code_end,
+                "code_output_begin": self.config.template.code_output_begin,
+                "code_output_end": self.config.template.code_output_end,
+                "code_output_format": self.config.template.code_output_format,
+            }
+        else:
+            # Use OpenAI-compatible markdown format when no template is provided
+            return {
+                "code_begin": "```python\n",
+                "code_end": "```\n",
+                "code_output_begin": "```output\n",
+                "code_output_end": "```\n",
+                "code_output_format": "qwen",
+            }
 
     def fill(
         self,
