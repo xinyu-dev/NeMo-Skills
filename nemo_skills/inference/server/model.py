@@ -677,8 +677,14 @@ class OpenAIModel(BaseModel):
         # Parameters unsupported by models with constraints (o1 series, gpt-4.1 series, etc.)
         unsupported_params = {
             'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
-            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate', 'stop'
+            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate'
         }
+        
+        # 'stop' parameter is only unsupported by the latest reasoning models (o3, o4-mini)
+        # see https://platform.openai.com/docs/api-reference/chat/create
+        latest_reasoning_models = ['o3', 'o4-mini']
+        if any(model_name in self.model.lower() for model_name in latest_reasoning_models):
+            unsupported_params.add('stop')
         
         filtered_kwargs = {}
         for key, value in kwargs.items():
