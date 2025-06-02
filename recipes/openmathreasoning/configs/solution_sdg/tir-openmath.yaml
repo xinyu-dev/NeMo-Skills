@@ -64,7 +64,6 @@ stages:
     # ++prompt_template=openmath-instruct removed because openai servers do not support it. 
     inline_args: >-
       ++prompt_config=openmath/tir
-      ++prompt_template=openmath-instruct
       ++inference.tokens_to_generate=16384
       ++code_execution=true
       ++server.code_execution.max_code_executions=null
