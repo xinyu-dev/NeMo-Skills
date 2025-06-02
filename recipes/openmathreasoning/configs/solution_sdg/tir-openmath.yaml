@@ -1,7 +1,7 @@
 cluster: local #slurm
 base_output_dir: /workspace/openmathreasoning
 expname: omr-tir
-suffix: tir-openmath  # Suffix for experiment names
+suffix: omr  # Suffix for experiment names
 
 
 # Input file for the first stage (generate_solutions)
@@ -72,9 +72,9 @@ stages:
       ++override_max_code_executions=true
     # Arguments passed as kwargs to the pipeline function (e.g. generate())
     stage_kwargs:
-      model: o4-mini # deepseek-ai/deepseek-r1-distill-qwen-32b
+      model: deepseek-ai/deepseek-r1-distill-qwen-32b
       server_type: openai
-      server_address: https://api.openai.com/v1 # https://integrate.api.nvidia.com/v1
+      server_address: https://integrate.api.nvidia.com/v1
       num_random_seeds: ${num_random_seeds_to_generate}
       with_sandbox: true
     # stage_kwargs:
