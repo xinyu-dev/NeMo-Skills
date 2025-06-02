@@ -1,4 +1,4 @@
-cluster: slurm
+cluster: local #slurm
 base_output_dir: /workspace/openmathreasoning
 expname: openmathreasoning
 suffix: tir-openmath  # Suffix for experiment names
@@ -15,19 +15,21 @@ num_random_seeds_to_generate: 16
 initial_dependency: ${expname}-merge-data-qwen-instruct
 
 # Define judge model server parameters
-generate_kwargs: &generate_kwargs
+generate_kwargs: &generate_kwargs # insert a tag here to make it easier to tag and less repetitive code
   # Model to be used for answer judgement
-  model: /trt_models/qwen2.5-32b-instruct
+  model: gpt-4.1-mini # /trt_models/qwen2.5-32b-instruct
   # Server type to launch the model
-  server_type: trtllm
+  server_type: openai # trtllm
+  # NIM API endpoint
+  server_address: https://api.openai.com/v1 # https://integrate.api.nvidia.com/v1
   # Server parameters
-  server_gpus: 8
-  server_nodes: 1
+  # server_gpus: 8
+  # server_nodes: 1
   # Number of generated solutions per problem to judge
   num_random_seeds: ${num_random_seeds_to_generate}
 
 generate_new_summaries_kwargs:
-  <<: *generate_kwargs
+  <<: *generate_kwargs # push the generate_kwargs specification here
   # Generate 4 new summaries for each solution
   num_random_seeds: 4   
 
@@ -70,17 +72,23 @@ stages:
       ++override_max_code_executions=true
     # Arguments passed as kwargs to the pipeline function (e.g. generate())
     stage_kwargs:
-      # you can take our published model from HF and use it as data generator
-      # https://huggingface.co/nvidia/OpenMath-Nemotron-14B
-      model: /trt_models/openmath-nemotron-14b
-      with_sandbox: true
-      server_type: trtllm
-      server_gpus: 8
-      server_nodes: 1
+      model: o4-mini # deepseek-ai/deepseek-r1-distill-qwen-32b
+      server_type: openai
+      server_address: https://api.openai.com/v1 # https://integrate.api.nvidia.com/v1
       num_random_seeds: ${num_random_seeds_to_generate}
-      num_chunks: 10  # since data is big, we are parallelizing it 10x (for each seed, so in total 80 jobs are scheduled)
-      # if your slurm cluster has a mandatory job timeout, you can schedule multiple dependent jobs with
-      # dependent_jobs: N
+      with_sandbox: true
+    # stage_kwargs:
+    #   # you can take our published model from HF and use it as data generator
+    #   # https://huggingface.co/nvidia/OpenMath-Nemotron-14B
+    #   model: /trt_models/openmath-nemotron-14b
+    #   with_sandbox: true
+    #   server_type: trtllm
+    #   server_gpus: 8
+    #   server_nodes: 1
+    #   num_random_seeds: ${num_random_seeds_to_generate}
+    #   num_chunks: 10  # since data is big, we are parallelizing it 10x (for each seed, so in total 80 jobs are scheduled)
+    #   # if your slurm cluster has a mandatory job timeout, you can schedule multiple dependent jobs with
+    #   # dependent_jobs: N
 
   fill_majority_answer:
     output_dir: ${directories.step-2-fill-majority}
