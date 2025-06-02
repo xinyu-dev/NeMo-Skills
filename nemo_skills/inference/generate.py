@@ -388,6 +388,9 @@ class GenerationTask:
         }
 
         if self.cfg.code_execution:
+            # Add code execution markers from prompt (handles both template and non-template cases)
+            generation_params.update(self.prompt.get_code_execution_args())
+            
             if self.cfg.override_max_code_executions and self.cfg.total_code_executions_in_prompt is not None:
                 max_code_executions_values = [dp['total_code_executions'] for dp in data_points]
                 generation_params['max_code_executions'] = max_code_executions_values
