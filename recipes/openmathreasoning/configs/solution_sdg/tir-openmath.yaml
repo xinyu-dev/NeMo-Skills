@@ -61,9 +61,9 @@ stages:
     output_dir: ${directories.step-1-generate-solutions}
     input_file: ${input_file}
     # Arguments passed inside the generate context string (e.g., ++param=value)
+    # ++prompt_template=openmath-instruct removed because openai servers do not support it. 
     inline_args: >-
       ++prompt_config=openmath/tir
-      ++prompt_template=openmath-instruct
       ++inference.tokens_to_generate=16384
       ++code_execution=true
       ++server.code_execution.max_code_executions=null
@@ -72,9 +72,9 @@ stages:
       ++override_max_code_executions=true
     # Arguments passed as kwargs to the pipeline function (e.g. generate())
     stage_kwargs:
-      model: deepseek-ai/deepseek-r1-distill-qwen-32b
+      model: o4-mini # deepseek-ai/deepseek-r1-distill-qwen-32b
       server_type: openai
-      server_address: https://integrate.api.nvidia.com/v1
+      server_address: https://api.openai.com/v1 # https://integrate.api.nvidia.com/v1
       num_random_seeds: ${num_random_seeds_to_generate}
       with_sandbox: true
     # stage_kwargs:
