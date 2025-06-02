@@ -1,5 +1,5 @@
 cluster: local #slurm
-base_output_dir: /workspace/openmathreasoning
+base_output_dir: /workspace/openmathreasoning-demo
 expname: omr-tir
 suffix: omr  # Suffix for experiment names
 
