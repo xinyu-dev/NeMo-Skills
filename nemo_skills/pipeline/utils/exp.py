@@ -157,6 +157,8 @@ def get_executor(
 
     if cluster_config["executor"] == "local":
         env_vars["PYTHONUNBUFFERED"] = "1"  # this makes sure logs are streamed right away
+        # Add custom hostname to avoid EC2 hostname issues
+        additional_docker_kwargs = {"entrypoint": "", "hostname": f"nemo-{job_name}"}
         return DockerExecutor(
             container_image=container,
             packager=packager,
@@ -167,7 +169,7 @@ def get_executor(
             num_gpus=-1 if gpus_per_node is not None else None,
             network="host",
             env_vars=env_vars,
-            additional_kwargs={"entrypoint": ""},
+            additional_kwargs=additional_docker_kwargs,
         )
 
     if not heterogeneous:
