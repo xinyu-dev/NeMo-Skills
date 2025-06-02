@@ -247,8 +247,6 @@ class GenerationTask:
             with open_dict(self.cfg.server):
                 self.cfg.server["server_type"] = "openai"
                 self.cfg.server["model"] = "model"
-            if self.cfg.code_execution:
-                raise ValueError("Code execution is not supported for OpenAI server")
 
         if self.cfg.code_execution:
             sandbox = get_sandbox(**self.cfg.sandbox) if self.cfg.sandbox is not None else None

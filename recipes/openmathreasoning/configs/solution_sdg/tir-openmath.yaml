@@ -78,7 +78,7 @@ stages:
       #server_nodes: 1
       server_address: https://api.openai.com/v1 
       num_random_seeds: ${num_random_seeds_to_generate}
-      with_sandbox: false
+      with_sandbox: true  # Enable sandbox for code execution
     # stage_kwargs:
     #   # you can take our published model from HF and use it as data generator
     #   # https://huggingface.co/nvidia/OpenMath-Nemotron-14B

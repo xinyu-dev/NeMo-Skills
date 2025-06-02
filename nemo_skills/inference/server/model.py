@@ -670,34 +670,40 @@ class OpenAIModel(BaseModel):
         return any(model_name in self.model.lower() for model_name in openai_models_with_constraints)
 
     def _filter_model_params(self, **kwargs) -> dict:
-        """Filter out unsupported parameters for OpenAI models that require special handling."""
-        if not self._is_openai_model():
-            return kwargs
-        
-        # Parameters unsupported by models with constraints (o1 series, gpt-4.1 series, etc.)
-        unsupported_params = {
-            'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
-            'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate'
-        }
-        
-        # 'stop' parameter is only unsupported by the latest reasoning models (o3, o4-mini)
-        # see https://platform.openai.com/docs/api-reference/chat/create
-        latest_reasoning_models = ['o3', 'o4-mini']
-        if any(model_name in self.model.lower() for model_name in latest_reasoning_models):
-            unsupported_params.add('stop')
-        
+        """Filter out unsupported parameters for OpenAI models."""
         filtered_kwargs = {}
-        for key, value in kwargs.items():
-            if key not in unsupported_params:
-                filtered_kwargs[key] = value
-            else:
-                LOG.warning(f"Parameter '{key}' is not supported by model {self.model}, ignoring")
         
-        # For openai  models, use max_completion_tokens instead of max_tokens/tokens_to_generate
-        if 'tokens_to_generate' in kwargs:
-            filtered_kwargs['max_completion_tokens'] = kwargs['tokens_to_generate']
-        elif 'max_tokens' in kwargs:
-            filtered_kwargs['max_completion_tokens'] = kwargs['max_tokens']
+        # Always remove tokens_to_generate as it's not a valid OpenAI parameter
+        for key, value in kwargs.items():
+            if key == 'tokens_to_generate':
+                # Convert to max_tokens for regular models or max_completion_tokens for reasoning models
+                if self._is_openai_model():
+                    filtered_kwargs['max_completion_tokens'] = value
+                else:
+                    filtered_kwargs['max_tokens'] = value
+            else:
+                filtered_kwargs[key] = value
+        
+        # For reasoning models, filter out additional unsupported parameters
+        if self._is_openai_model():
+            reasoning_unsupported_params = {
+                'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
+                'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens'
+            }
+            
+            # 'stop' parameter is only unsupported by the latest reasoning models (o3, o4-mini)
+            latest_reasoning_models = ['o3', 'o4-mini']
+            if any(model_name in self.model.lower() for model_name in latest_reasoning_models):
+                reasoning_unsupported_params.add('stop')
+            
+            final_kwargs = {}
+            for key, value in filtered_kwargs.items():
+                if key not in reasoning_unsupported_params:
+                    final_kwargs[key] = value
+                else:
+                    LOG.warning(f"Parameter '{key}' is not supported by reasoning model {self.model}, ignoring")
+            
+            return final_kwargs
             
         return filtered_kwargs
 
