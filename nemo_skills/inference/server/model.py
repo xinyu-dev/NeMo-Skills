@@ -664,17 +664,17 @@ class OpenAIModel(BaseModel):
         """OpenAI doesn't support top-k, so not making any changes here."""
         pass
 
-    def _is_reasoning_model(self) -> bool:
-        """Check if the current model is an OpenAI reasoning model (o1 series)."""
-        reasoning_models = ['o1', 'o1-mini', 'o1-preview', 'o4-mini', 'o3-mini', 'o3']
-        return any(reasoning_model in self.model.lower() for reasoning_model in reasoning_models)
+    def _is_openai_model(self) -> bool:
+        """Check if the current model is an OpenAI model that requires special parameter filtering."""
+        openai_models_with_constraints = ['o1', 'o1-mini', 'o1-preview', 'o4-mini', 'o3-mini', 'o3', 'gpt-4.1-mini', 'gpt-4.1', 'gpt-4.1-nano']
+        return any(model_name in self.model.lower() for model_name in openai_models_with_constraints)
 
-    def _filter_reasoning_model_params(self, **kwargs) -> dict:
-        """Filter out unsupported parameters for OpenAI reasoning models."""
-        if not self._is_reasoning_model():
+    def _filter_model_params(self, **kwargs) -> dict:
+        """Filter out unsupported parameters for OpenAI models that require special handling."""
+        if not self._is_openai_model():
             return kwargs
         
-        # Parameters unsupported by reasoning models
+        # Parameters unsupported by models with constraints (o1 series, gpt-4.1 series, etc.)
         unsupported_params = {
             'temperature', 'top_p', 'presence_penalty', 'frequency_penalty', 
             'logprobs', 'top_logprobs', 'logit_bias', 'max_tokens', 'tokens_to_generate', 'stop'
@@ -685,9 +685,9 @@ class OpenAIModel(BaseModel):
             if key not in unsupported_params:
                 filtered_kwargs[key] = value
             else:
-                LOG.warning(f"Parameter '{key}' is not supported by reasoning model {self.model}, ignoring")
+                LOG.warning(f"Parameter '{key}' is not supported by model {self.model}, ignoring")
         
-        # For reasoning models, use max_completion_tokens instead of max_tokens/tokens_to_generate
+        # For openai  models, use max_completion_tokens instead of max_tokens/tokens_to_generate
         if 'tokens_to_generate' in kwargs:
             filtered_kwargs['max_completion_tokens'] = kwargs['tokens_to_generate']
         elif 'max_tokens' in kwargs:
@@ -740,8 +740,8 @@ class OpenAIModel(BaseModel):
                     'tokens_to_generate': tokens_to_generate,  # Used for reasoning model conversion
                 }
                 
-                # Filter parameters for reasoning models
-                filtered_params = self._filter_reasoning_model_params(**api_params)
+                # Filter parameters for models with constraints
+                filtered_params = self._filter_model_params(**api_params)
                 
                 response = self.client.chat.completions.create(**filtered_params)
                 break  # Success, exit the retry loop
@@ -783,8 +783,8 @@ class OpenAIModel(BaseModel):
                     retry_params['max_tokens'] = max_tokens
                     retry_params['tokens_to_generate'] = max_tokens
                     
-                    # Filter parameters for reasoning models
-                    filtered_retry_params = self._filter_reasoning_model_params(**retry_params)
+                    # Filter parameters for models with constraints
+                    filtered_retry_params = self._filter_model_params(**retry_params)
                     
                     response = self.client.chat.completions.create(**filtered_retry_params)
                 else:
