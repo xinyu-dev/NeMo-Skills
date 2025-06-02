@@ -1,7 +1,7 @@
 cluster: local #slurm
 base_output_dir: /workspace/openmathreasoning
 expname: openmathreasoning
-suffix: tir-openmath  # Suffix for experiment names
+suffix: tiropenmath  # Suffix for experiment names
 
 
 # Input file for the first stage (generate_solutions)
