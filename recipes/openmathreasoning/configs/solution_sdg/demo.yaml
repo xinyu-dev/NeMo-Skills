@@ -17,7 +17,7 @@ initial_dependency: ${expname}-merge-data-nim
 # Define judge model server parameters
 generate_kwargs:
   # Model to be used for answer judgement
-  model: gpt-4o-mini # meta/llama-3.3-70b-instruct
+  model: gpt-4.1-mini # meta/llama-3.3-70b-instruct
   # Server type to launch the model
   server_type: openai
   # NIM API endpoint
@@ -57,6 +57,7 @@ stages:
   fill_majority_answer:
     output_dir: ${directories.step-2-fill-majority}
     input_dir: ${directories.step-1-generate-solutions}
+    # inline_args: "++fill_is_correct=False ++ignore_if_not_none=True"
     dependencies:
       - generate_solutions
 
