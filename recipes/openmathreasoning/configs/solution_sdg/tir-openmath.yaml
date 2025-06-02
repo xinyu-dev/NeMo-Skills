@@ -10,7 +10,7 @@ input_file: ${base_output_dir}/problem-sdg/step-5-merge-data/all-problems.jsonl
 # File with benchmark problems you want decontaminate with
 contamination_file: ${base_output_dir}/problem-sdg/step-6-decontamination/contamination-labeled.jsonl
 # Number of solutions per each problem from the input file to generate
-num_random_seeds_to_generate: 16
+num_random_seeds_to_generate: 1 # 16
 # Can define initial dependency for the `generate_solutions` stage to run after
 initial_dependency: ${expname}-merge-data-qwen-instruct
 
@@ -61,7 +61,6 @@ stages:
     output_dir: ${directories.step-1-generate-solutions}
     input_file: ${input_file}
     # Arguments passed inside the generate context string (e.g., ++param=value)
-    # ++prompt_template=openmath-instruct removed because openai servers do not support it. 
     inline_args: >-
       ++prompt_config=openmath/tir
       ++inference.tokens_to_generate=16384
@@ -113,8 +112,8 @@ stages:
   postprocess_tir_generations:
     output_dir: ${directories.step-4-postprocess-tir}
     input_dir: ${directories.step-3-judge-answers}
-    code_begin: "<tool_call>\n"
-    code_end: "</tool_call>\n"
+    code_begin: "```python\n"
+    code_end: "```\n"
     dependencies:
       - judge_answers
     # You can use CPU partition for this script, if available

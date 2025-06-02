@@ -133,6 +133,13 @@ class CodeExecutionWrapper:
 
         start_time = int(time.time())
 
+        # For OpenAI models with markdown format, don't use restrictive stop phrases
+        # Let the model generate freely and detect complete code blocks
+        additional_stop_phrases = []
+        if not (is_openai_format and code_begin == "```python\n"):
+            # Original behavior for non-OpenAI models
+            additional_stop_phrases = [code_end]
+            
         request = {
             "prompt": new_prompt,
             "tokens_to_generate": tokens_to_generate,
@@ -142,7 +149,7 @@ class CodeExecutionWrapper:
             "min_p": min_p,
             "random_seed": random_seed,
             "repetition_penalty": repetition_penalty,
-            "stop_phrases": stop_phrases + [code_end],
+            "stop_phrases": stop_phrases + additional_stop_phrases,
             "timeout": timeout,
         }
         session_id = None
@@ -209,9 +216,37 @@ class CodeExecutionWrapper:
             #       in most cases the output should be small though
             if request['tokens_to_generate'] <= 0:
                 break
-            # .rfind(code_end, 0, -1) searches for the second-to-last occurrence of code_end and checks
-            # that the last code_begin is not closed to ensure that we are inside the code block
-            if output.endswith(code_end) and output.rfind(code_begin) > output.rfind(code_end, 0, -1):
+            should_execute_code = False
+            
+            if is_openai_format and code_begin == "```python\n":
+                # For OpenAI with markdown format, look for complete code blocks
+                last_code_begin = output.rfind(code_begin)
+                if last_code_begin != -1:
+                    # Look for code_end after the last code_begin
+                    code_end_pos = output.find(code_end, last_code_begin + len(code_begin))
+                    if code_end_pos != -1:
+                        # We have a complete code block
+                        should_execute_code = True
+                        
+                        # If there's content after the code block, truncate it to avoid fake output
+                        remaining_text = output[code_end_pos + len(code_end):]
+                        if remaining_text.strip():
+                            # Truncate to just after the code block
+                            output = output[:code_end_pos + len(code_end)]
+                            # Update the prompt to reflect the truncated output
+                            if is_openai_format:
+                                original_content = original_prompt[-1]['content'] if original_prompt else ""
+                                request['prompt'][-1]['content'] = original_content + output
+                            else:
+                                request['prompt'] = prompt + output
+            else:
+                # Original logic for non-OpenAI models
+                # .rfind(code_end, 0, -1) searches for the second-to-last occurrence of code_end and checks
+                # that the last code_begin is not closed to ensure that we are inside the code block
+                if output.endswith(code_end) and output.rfind(code_begin) > output.rfind(code_end, 0, -1):
+                    should_execute_code = True
+            
+            if should_execute_code:
                 code_execution_time_start = time.time()
                 execution_dict, session_id = self.sandbox.execute_code(
                     generated_code=extract_code_to_execute(output, code_begin, code_end),

@@ -28,12 +28,18 @@ def test_code_execution_count():
     }
     
     # Get prompt to determine code execution markers
-    prompt = get_prompt('generic/math')  # No template = OpenAI format
+    prompt = get_prompt('openmath/tir')  # TIR prompt config, no template = OpenAI format
     code_args = prompt.get_code_execution_args()
     
     print(f"Code execution markers:")
     for key, value in code_args.items():
         print(f"  {key}: {repr(value)}")
+    
+    print(f"\nExpected markers for OpenAI:")
+    print(f"  code_begin: {repr('```python\\n')}")
+    print(f"  code_end: {repr('```\\n')}")
+    print(f"  code_output_begin: {repr('```output\\n')}")
+    print(f"  code_output_end: {repr('```\\n')}")
     
     try:
         # Create code execution model
