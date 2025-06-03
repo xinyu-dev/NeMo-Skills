@@ -74,8 +74,9 @@ def test_openai_tir():
                 
                 # Check if the generation contains expected patterns
                 generation = result['generation']
-                if '```python' in generation and '```output' in generation:
+                if '<tool_call>' in generation and '```output' in generation:
                     print("✅ Generated solution contains code blocks and outputs!")
+                    print(generation)
                 else:
                     print("⚠️  Generated solution missing expected code/output blocks")
                     
