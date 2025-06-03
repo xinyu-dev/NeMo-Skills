@@ -140,8 +140,8 @@ class CodeExecutionWrapper:
             # Original behavior for non-OpenAI models
             additional_stop_phrases = [code_end]
         else:
-            # For OpenAI models, add <|im_end|> to prevent excessive code execution rounds
-            additional_stop_phrases = ["<|im_end|>"]
+            # For OpenAI models, leave it blank
+            additional_stop_phrases = []
             
         request = {
             "prompt": new_prompt,
@@ -231,17 +231,23 @@ class CodeExecutionWrapper:
                         # We have a complete code block
                         should_execute_code = True
                         
-                        # If there's content after the code block, truncate it to avoid fake output
-                        remaining_text = output[code_end_pos + len(code_end):]
-                        if remaining_text.strip():
-                            # Truncate to just after the code block
-                            output = output[:code_end_pos + len(code_end)]
-                            # Update the prompt to reflect the truncated output
-                            if is_openai_format:
-                                original_content = original_prompt[-1]['content'] if original_prompt else ""
-                                request['prompt'][-1]['content'] = original_content + output
-                            else:
-                                request['prompt'] = prompt + output
+                        # Check for stop phrases in the entire output (especially important for reasoning models)
+                        # This handles cases where stop phrases appear after earlier code blocks
+                        if stop_phrases:
+                            for stop_phrase in stop_phrases:
+                                if stop_phrase in output:
+                                    # Truncate at the stop phrase to prevent further generation
+                                    stop_pos = output.find(stop_phrase)
+                                    output = output[:stop_pos]
+                                    # Update the prompt to reflect the truncated output
+                                    if is_openai_format:
+                                        original_content = original_prompt[-1]['content'] if original_prompt else ""
+                                        request['prompt'][-1]['content'] = original_content + output
+                                    else:
+                                        request['prompt'] = prompt + output
+                                    # Break the generation loop after this code execution
+                                    request['tokens_to_generate'] = 0
+                                    break
             else:
                 # Original logic for non-OpenAI models
                 # .rfind(code_end, 0, -1) searches for the second-to-last occurrence of code_end and checks

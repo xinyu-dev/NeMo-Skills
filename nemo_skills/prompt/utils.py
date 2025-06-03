@@ -314,8 +314,9 @@ class Prompt:
         """Returns the stop phrases from the template if it exists, otherwise None."""
         if self.config.template:
             return list(self.config.template.stop_phrases)
-
-        return None
+        
+        # For OpenAI models, add <|im_end|> to prevent excessive code execution rounds
+        return ["<|im_end|>"]
 
     def __str__(self):
         return str(self.config)
