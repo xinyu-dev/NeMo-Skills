@@ -71,7 +71,7 @@ stages:
       ++override_max_code_executions=true
     # Arguments passed as kwargs to the pipeline function (e.g. generate())
     stage_kwargs:
-      model: gpt-4.1 # /trt_models/openmath-nemotron-14b
+      model: gpt-4.1 # /trt_models/openmath-nemotron-14b # need a good OpenAI here, otherwise cannot follow the the right instruction to adhere to the special token template
       server_type: openai # trtllm
       # server_gpus: 1
       #server_nodes: 1
