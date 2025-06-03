@@ -91,18 +91,23 @@ def filter_code_solution(sample, args):
 
     # Make some initial filtering to speed up the next llm judgement stage
     if args.code_begin not in sample["generation"]:
+        print(f"DEBUG: No code blocks found in generation: \n {sample['generation']} \n")
         return "No code blocks found"
     if not validate_code_execution(sample["generation"], args.code_begin.strip(), args.code_end.strip()):
+        print(f"DEBUG: Incomplete code execution found in generation: \n {sample['generation']} \n")
         return "Incomplete code execution found"
     if "judgement" in sample and "judgement: no" in sample["judgement"].lower():
+        print(f"DEBUG: Incorrect final answer found in generation: \n {sample['generation']} \n")
         return "Incorrect final answer"
     if sample["generation"].find("\\boxed{") != -1 and sample["generation"].find("\\boxed{") < sample[
         "generation"
     ].find(args.code_begin):
+        print(f"DEBUG: Boxed before code found in generation: \n {sample['generation']} \n")
         return "Boxed before code"
     if sample["generation"].find(sample["predicted_answer"]) != -1 and sample["generation"].find(
         sample["predicted_answer"]
     ) < sample["generation"].find(args.code_begin):
+        print(f"DEBUG: Predicted answer before code found in generation: \n {sample['generation']} \n")
         return "Predicted answer before code"
 
     generation = cut_final_answer_part(sample["generation"])
