@@ -1,5 +1,5 @@
 user: |-
-  I will give you a math problem and a long solution to that problem exploring different approaches, potentially making mistakes along the way, correcting them, switching around and so on. But eventually that solution gets to the right approach and solves the problem. Your task is to write a clean, concise version of the final correct solution without all the meandering. You need to cover all the details in the clean solution, and be faithful to the original solution in its reasoning process. 
+  I will give you a math problem and a long solution to that problem exploring different approaches, potentially making mistakes along the way, correcting them, switching around and so on. But eventually that solution gets to the right approach and solves the problem. Your task is to write a clean, concise summary of the final correct solution without all the meandering. You need to cover all the details in the clean solution, and be faithful to the original solution in its reasoning process. 
 
   In your revision, you must follow the formatting rules that the long solution follows. These are the rules:
 
@@ -31,7 +31,7 @@ user: |-
   Long Solution:
   {generation}
 
-  Now write a clean concise version of the final solution: 
+  Now write a clean concise summary of the final solution: 
 
 
 
