@@ -142,9 +142,10 @@ def preprocess_code_judge(args):
 
     # Save rejected samples to separate JSON files
     output_dir = os.path.dirname(args.output_file)
+    
     for reason, samples in rejected_samples.items():
         if samples:  # Only create file if there are samples
-            filename = reason.lower().replace(" ", "_") + "_rejected.json"
+            filename = f"rejected_output_{reason.lower().replace(' ', '_')}.json"
             filepath = os.path.join(output_dir, filename)
             with open(filepath, "w") as f:
                 json.dump(samples, f, indent=2)
