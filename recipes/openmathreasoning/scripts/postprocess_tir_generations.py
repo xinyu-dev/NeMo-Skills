@@ -105,11 +105,12 @@ def filter_code_solution(sample, args, rejected_samples):
     ].find(args.code_begin):
         rejected_samples["Boxed before code"].append(sample)
         return "Boxed before code"
-    if sample["generation"].find(sample["predicted_answer"]) != -1 and sample["generation"].find(
-        sample["predicted_answer"]
-    ) < sample["generation"].find(args.code_begin):
-        rejected_samples["Predicted answer before code"].append(sample)
-        return "Predicted answer before code"
+    # the original filtering simply detects the answer before the code block, which results in a lot of false positives cases. 
+    # if sample["generation"].find(sample["predicted_answer"]) != -1 and sample["generation"].find(
+    #     sample["predicted_answer"]
+    # ) < sample["generation"].find(args.code_begin):
+    #     rejected_samples["Predicted answer before code"].append(sample)
+    #     return "Predicted answer before code"
 
     generation = cut_final_answer_part(sample["generation"])
     if generation is None:
