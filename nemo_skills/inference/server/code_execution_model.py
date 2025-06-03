@@ -139,6 +139,9 @@ class CodeExecutionWrapper:
         if not (is_openai_format and code_begin == "```python\n"):
             # Original behavior for non-OpenAI models
             additional_stop_phrases = [code_end]
+        else:
+            # For OpenAI models, add <|im_end|> to prevent excessive code execution rounds
+            additional_stop_phrases = ["<|im_end|>"]
             
         request = {
             "prompt": new_prompt,

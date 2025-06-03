@@ -6,7 +6,9 @@ user: |-
   ```python
   # Your Python code here
   ```
-  and the output of the code will be displayed in the following format:
+  <|im_end|>
+  Be sure to add the stop phrase <|im_end|> after the code block.
+  The output of the code will be displayed in the following format:
   ```output
   # Code execution output will appear here
   ```
@@ -14,3 +16,5 @@ user: |-
   Make sure to put the answer (and only answer) inside \boxed{{}}.
 
   {problem}
+
+
