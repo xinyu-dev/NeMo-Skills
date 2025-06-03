@@ -24,7 +24,7 @@ import argparse
 from typing import List, Dict, Optional
 from os import path
 from nemo_skills.evaluation.metrics.utils import is_correct_judgement
-from nemo_skills.code_execution.math_grader import extract_answer
+from nemo_skills.evaluation.math_grader import extract_answer
 
 
 
