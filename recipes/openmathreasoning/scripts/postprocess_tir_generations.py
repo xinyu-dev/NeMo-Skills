@@ -55,7 +55,15 @@ def validate_code_execution(text, code_begin="```python", code_end="```"):
 
 
 def cut_final_answer_part(output):
-    final_answer_idx = output.find("**Final Answer**")
+    # Try multiple patterns for final answer
+    patterns = ["**Final Answer**", "Final Answer:", "Final Answer"]
+    final_answer_idx = -1
+    
+    for pattern in patterns:
+        final_answer_idx = output.find(pattern)
+        if final_answer_idx != -1:
+            break
+    
     if final_answer_idx == -1:
         return None
 
