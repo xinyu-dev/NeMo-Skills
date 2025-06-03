@@ -17,7 +17,7 @@ initial_dependency: ${expname}-merge-data-qwen-instruct
 # Define judge model server parameters
 generate_kwargs: &generate_kwargs # insert a tag here to make it easier to tag and less repetitive code
   # Model to be used for answer judgement
-  model: gpt-4.1 # /trt_models/qwen2.5-32b-instruct
+  model: gpt-4.1-mini # /trt_models/qwen2.5-32b-instruct
   # Server type to launch the model
   server_type: openai # trtllm
   # NIM API endpoint
@@ -31,7 +31,7 @@ generate_kwargs: &generate_kwargs # insert a tag here to make it easier to tag a
 generate_new_summaries_kwargs:
   <<: *generate_kwargs # push the generate_kwargs specification here
   # Generate 4 new summaries for each solution
-  num_random_seeds: 3   
+  num_random_seeds: 2   
 
 # Define the full sequence of stages for this mode
 pipeline_stages:
