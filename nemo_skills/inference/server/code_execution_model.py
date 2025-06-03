@@ -132,16 +132,6 @@ class CodeExecutionWrapper:
             new_prompt = copy.deepcopy(prompt)
 
         start_time = int(time.time())
-
-        # For OpenAI models with markdown format, don't use restrictive stop phrases
-        # Let the model generate freely and detect complete code blocks
-        additional_stop_phrases = []
-        if not (is_openai_format and code_begin == "```python\n"):
-            # Original behavior for non-OpenAI models
-            additional_stop_phrases = [code_end]
-        else:
-            # For OpenAI models, leave it blank
-            additional_stop_phrases = []
             
         request = {
             "prompt": new_prompt,
@@ -152,7 +142,7 @@ class CodeExecutionWrapper:
             "min_p": min_p,
             "random_seed": random_seed,
             "repetition_penalty": repetition_penalty,
-            "stop_phrases": stop_phrases + additional_stop_phrases,
+            "stop_phrases": stop_phrases + [code_end],
             "timeout": timeout,
         }
         session_id = None
@@ -221,7 +211,7 @@ class CodeExecutionWrapper:
                 break
             should_execute_code = False
             
-            if is_openai_format and code_begin == "```python\n":
+            if is_openai_format:
                 # For OpenAI with markdown format, look for complete code blocks
                 last_code_begin = output.rfind(code_begin)
                 if last_code_begin != -1:

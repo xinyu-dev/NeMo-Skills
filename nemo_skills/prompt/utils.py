@@ -215,8 +215,8 @@ class Prompt:
             # Use OpenAI-compatible markdown format when no template is provided
             # for example GPT-4o-mini, etc
             return {
-                "code_begin": "```python\n",
-                "code_end": "```\n",
+                "code_begin": "<tool_call>\n",
+                "code_end": "</tool_call>\n",
                 "code_output_begin": "```output\n",
                 "code_output_end": "```\n",
                 "code_output_format": "qwen",
