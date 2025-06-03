@@ -17,7 +17,7 @@ initial_dependency: ${expname}-merge-data-qwen-instruct
 # Define judge model server parameters
 generate_kwargs: &generate_kwargs # insert a tag here to make it easier to tag and less repetitive code
   # Model to be used for answer judgement
-  model: gpt-4.1 # /trt_models/qwen2.5-32b-instruct
+  model: gpt-4o # /trt_models/qwen2.5-32b-instruct
   # Server type to launch the model
   server_type: openai # trtllm
   # NIM API endpoint
