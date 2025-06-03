@@ -66,8 +66,8 @@ def trim_reasoning_generation(reasoning_generation, start_tag, end_tag, strict_e
     # Find the start and end tags. If either is not found, use the entire generation
     start_tag_position = reasoning_generation.find(start_tag)
     if start_tag_position == -1:
-        # If no start tag found, use the entire generation as reasoning trace
-        reasoning_trace = reasoning_generation
+        # If no start tag found, wrap the entire generation with tags
+        reasoning_trace = start_tag + "\n" + reasoning_generation + "\n" + end_tag
     else:
         end_tag_position = reasoning_generation.find(end_tag)
         if end_tag_position == -1:
