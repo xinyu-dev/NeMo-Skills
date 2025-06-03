@@ -143,7 +143,7 @@ def format_reasoning_trace_with_summary(reasoning_file, summary_dir, start_tag, 
             # Select the best summary
             best_summary = select_best_summary(valid_summaries)                
             # Combine the trimmed reasoning trace with the best summary
-            combined_generation = trimmed_reasoning_trace + best_summary["generation"]
+            combined_generation = trimmed_reasoning_trace + "\n\nSummary:\n" + best_summary["generation"]
             # Update the reasoning instance
             reasoning_instance["generation"] = combined_generation
             # Add the instance to the list of formatted instances
