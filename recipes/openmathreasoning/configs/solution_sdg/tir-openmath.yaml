@@ -133,10 +133,9 @@ stages:
   judge_new_summaries:
     input_dir: ${directories.step-5-generate-new-summaries}
     output_dir: ${directories.step-6-judge-new-summaries}
-
     dependencies:
       - generate_new_summaries
-    inline_args: "++prompt_template=qwen-instruct"
+    # inline_args: "++prompt_template=qwen-instruct"
     stage_kwargs: ${generate_new_summaries_kwargs}
 
   merge_new_summaries:
