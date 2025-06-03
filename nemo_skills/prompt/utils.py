@@ -213,6 +213,7 @@ class Prompt:
             }
         else:
             # Use OpenAI-compatible markdown format when no template is provided
+            # for example GPT-4o-mini, etc
             return {
                 "code_begin": "```python\n",
                 "code_end": "```\n",
