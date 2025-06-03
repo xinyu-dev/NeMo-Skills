@@ -8,6 +8,9 @@ user: |-
   <tool_call>
   # Your Python code here
   </tool_call>
+  <|im_end|>
+  
+  Be sure to add the stop phrase <|im_end|> after the code block.
   
   The output of the code will be displayed in the following format:
   ```output
@@ -18,6 +21,7 @@ user: |-
   <tool_call>
   print("Hello, world!")
   </tool_call>
+  <|im_end|>
   ```output
   Hello, world!
   ```
