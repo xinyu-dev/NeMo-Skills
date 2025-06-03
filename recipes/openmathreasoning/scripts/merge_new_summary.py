@@ -63,20 +63,21 @@ def select_best_summary(valid_summaries):
 def trim_reasoning_generation(reasoning_generation, start_tag, end_tag, strict_end_tag=False):    
     """Trim the thinking part of the original reasoning generation till the step with the rightmost boxed entry"""
     
-    # Find the start and end tags. If either is not found, return None
+    # Find the start and end tags. If either is not found, use the entire generation
     start_tag_position = reasoning_generation.find(start_tag)
     if start_tag_position == -1:
-        return None
-
-    end_tag_position = reasoning_generation.find(end_tag)
-    if end_tag_position == -1:
-        if strict_end_tag:
-            return None
-        else:
-            reasoning_generation = reasoning_generation + end_tag
-            reasoning_trace = reasoning_generation
+        # If no start tag found, use the entire generation as reasoning trace
+        reasoning_trace = reasoning_generation
     else:
-        reasoning_trace = reasoning_generation[:end_tag_position + len(end_tag)]
+        end_tag_position = reasoning_generation.find(end_tag)
+        if end_tag_position == -1:
+            if strict_end_tag:
+                return None
+            else:
+                reasoning_generation = reasoning_generation + end_tag
+                reasoning_trace = reasoning_generation
+        else:
+            reasoning_trace = reasoning_generation[:end_tag_position + len(end_tag)]
 
     # Extract the answer from the reasoning trace by searching for boxed entries
     answer_from_reasoning_trace = extract_answer(reasoning_trace)
@@ -95,8 +96,8 @@ def trim_reasoning_generation(reasoning_generation, start_tag, end_tag, strict_e
                 reasoning_trace[rightmost_match.end():].split("\n\n")[0]
             )
 
-            # If the end tag is not present, add it
-            if end_tag not in reasoning_trace:
+            # If we originally had tags and the end tag is not present, add it
+            if start_tag_position != -1 and end_tag not in reasoning_trace:
                 reasoning_trace += end_tag
                 
     return reasoning_trace
