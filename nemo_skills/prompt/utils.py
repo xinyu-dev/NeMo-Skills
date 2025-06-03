@@ -316,7 +316,7 @@ class Prompt:
             return list(self.config.template.stop_phrases)
         
         # For OpenAI models, add <|im_end|> to prevent excessive code execution rounds
-        return ["<|im_end|>"]
+        return ["</tool_call>"]
 
     def __str__(self):
         return str(self.config)
