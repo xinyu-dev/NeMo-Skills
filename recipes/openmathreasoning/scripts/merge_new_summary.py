@@ -20,6 +20,7 @@ import json
 import re
 import glob
 import argparse
+import os
 
 from typing import List, Dict, Optional
 from os import path
@@ -163,6 +164,11 @@ def main():
 
     formatted_instances = format_reasoning_trace_with_summary(
         args.reasoning_file, args.summary_dir, args.start_tag, args.end_tag, args.strict_end_tag)
+
+    # Create output directory if it doesn't exist
+    output_dir = os.path.dirname(args.output_file)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
 
     with open(args.output_file, "w") as f:
         for instance in formatted_instances:
