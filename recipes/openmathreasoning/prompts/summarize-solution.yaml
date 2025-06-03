@@ -1,10 +1,39 @@
 user: |-
-  I will give you a math problem and a long solution to that problem exploring different approaches, making mistakes along the way, correcting them, switching around and so on. But eventually that solution gets to the right approach and solves the problem. Your task is to write a clean version of the final correct solution without all the exploration. Cover all the details of the final solution.
+  I will give you a math problem and a long solution to that problem exploring different approaches, potentially making mistakes along the way, correcting them, switching around and so on. But eventually that solution gets to the right approach and solves the problem. Your task is to write a clean, concise version of the final correct solution without all the meandering. You need to cover all the details in the clean solution, and be faithful to the original solution in its reasoning process. 
+
+  In your revision, you must follow the formatting rules that the long solution follows. These are the rules:
+
+  1. When using python code, you must use the following format:
+  <tool_call>
+  # Your Python code here
+  </tool_call>
+    
+  2. The output of the code will be displayed in the following format:
+  ```output
+  # Code execution output will appear here
+  ```
+  
+  For example:
+  <tool_call>
+  print("Hello, world!")
+  </tool_call>
+  ```output
+  Hello, world!
+  ```
+  Each output block must be preceded by an actual tool call.
+  Finally, end your response with exactly **Final Answer**: \boxed{{}}, where the answer is placed inside the box. 
+
+  Here is the problem and the long solution:
 
   Problem:
   {problem}
 
-  Solution:
+  Long Solution:
   {generation}
 
-  Now write a clean version of the final correct solution without all the exploration but cover all the details of the final solution. 
+  Now write a clean concise version of the final solution: 
+
+
+
+
+
