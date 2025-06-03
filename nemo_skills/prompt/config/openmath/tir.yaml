@@ -7,15 +7,11 @@ user: |-
   code_end: "</tool_call>\n"
   code_output_begin: "```output\n"
   code_output_end: "```\n"
-  For example, you must use the following format for code blocks:
-  <tool_call>
-  print("Hello, world!")
-  </tool_call>
+  For example, you must use the following format for code blocks, with the code block wrapped in <tool_call> and </tool_call> and ending with stop phrase <|im_end|>:
+  <tool_call>\n print("Hello, world!")\n</tool_call>\n<|im_end|>
   and the output of the code block to the should be formatted as:
-  ```output
-  Hello, world!
-  ```
-  Make sure to put the answer (and only answer) inside \boxed{{}}.
+  ```output\nHello, world!\n```
+  Finally output the answer (and only answer) inside \boxed{{}}.
 
   {problem}
 
