@@ -31,7 +31,7 @@ generate_kwargs: &generate_kwargs # insert a tag here to make it easier to tag a
 generate_new_summaries_kwargs:
   <<: *generate_kwargs # push the generate_kwargs specification here
   # Generate 4 new summaries for each solution
-  num_random_seeds: 4   
+  num_random_seeds: 1   
 
 # Define the full sequence of stages for this mode
 pipeline_stages:
