@@ -7,9 +7,8 @@ user: |-
   When using python code, you must use the following format:
   <tool_call>
   # Your Python code here
-  </tool_call><|im_end|>
+  </tool_call>
   
-  Be sure to add the stop phrase <|im_end|> after the code block.
   The output of the code will be displayed in the following format:
   ```output
   # Code execution output will appear here
@@ -18,7 +17,7 @@ user: |-
   For example:
   <tool_call>
   print("Hello, world!")
-  </tool_call><|im_end|>
+  </tool_call>
   ```output
   Hello, world!
   ```
