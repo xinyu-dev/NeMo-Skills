@@ -27,7 +27,7 @@ user: |-
   Hello, world!
   ```
   Each output block must be preceded by an actual tool call. Do not write output block yourself, without an actual tool call.
-  Finally, end your response with exactly **Final Answer**: \boxed{[answer]}, where the [answer] is your answer, placed in side the box \boxed{{}}.
+  Finally, end your response with exactly **Final Answer**: \boxed{{}}, where your answer is placed inside the box. 
 
   Problem: {problem}
 
