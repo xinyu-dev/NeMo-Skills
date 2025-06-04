@@ -17,7 +17,6 @@
 *.tar
 *.npy
 *.info
-*.jsonl
 *.csv
 nemo_experiments
 wandb
