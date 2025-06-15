@@ -1,5 +1,5 @@
-cluster: slurm
-base_output_dir: /workspace/openmathreasoning
+cluster: local
+base_output_dir: /workspace/openmathreasoning-demo
 expname: omr-tir
 suffix: omr  # Suffix for experiment names
 
@@ -10,7 +10,7 @@ input_file: ${base_output_dir}/problem-sdg/step-5-merge-data/all-problems.jsonl
 # File with benchmark problems you want decontaminate with
 contamination_file: ${base_output_dir}/problem-sdg/step-6-decontamination/output.jsonl
 # Number of solutions per each problem from the input file to generate
-num_random_seeds_to_generate: 16
+num_random_seeds_to_generate: 3 # 16
 # Can define initial dependency for the `generate_solutions` stage to run after
 initial_dependency: ${expname}-merge-data-qwen-instruct
 
