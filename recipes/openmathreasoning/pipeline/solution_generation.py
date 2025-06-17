@@ -330,7 +330,6 @@ def merge_new_summaries(cluster, expname, run_after, stage_config, **kwargs):
             **stage_config.get('stage_kwargs', {}),
         )
 
-
 def prepare_for_sft(cluster, expname, run_after, stage_config, **kwargs):
     output_dir = stage_config["output_dir"]
     input_file = stage_config["input_file"]
