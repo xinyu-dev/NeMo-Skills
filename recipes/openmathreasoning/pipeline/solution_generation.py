@@ -290,15 +290,17 @@ def merge_new_summaries(cluster, expname, run_after, stage_config, **kwargs):
     summary_dir = stage_config["summary_dir"]
     output_dir = stage_config["output_dir"]
     reasoning_dir = stage_config.get("reasoning_dir")
+    script_path = "/nemo_run/code/recipes/openmathreasoning/scripts/merge_new_summary.py"
 
     if reasoning_dir:
         for random_seed in range(stage_config.get("num_soln_random_seeds", 32)):
             cur_reasoning_file = f"{reasoning_dir}/output-rs{random_seed}.jsonl"
             cur_summary_dir = f"{summary_dir}/output-rs{random_seed}"
             cur_output_file = f"{output_dir}/output-rs{random_seed}.jsonl"
-
+            
             cmd = (
-                f"python /nemo_run/code/recipes/openmathreasoning/scripts/merge_new_summary.py "
+                f"echo 'Content of {script_path} rs{random_seed}' && cat {script_path} && "
+                f"python {script_path} "
                 f"  --reasoning_file {cur_reasoning_file} "
                 f"  --summary_dir {cur_summary_dir} "
                 f"  --output_file {cur_output_file} "
