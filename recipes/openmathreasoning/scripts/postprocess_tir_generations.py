@@ -17,7 +17,7 @@ import glob
 import json
 import os
 import re
-from collections import Counter
+from collections import Counter, defaultdict
 
 
 def validate_code_execution(text, code_begin="```python", code_end="```"):
@@ -55,7 +55,15 @@ def validate_code_execution(text, code_begin="```python", code_end="```"):
 
 
 def cut_final_answer_part(output):
-    final_answer_idx = output.find("**Final Answer**")
+    # final_answer_idx = output.find("**Final Answer**")
+    # Try multiple patterns for final answer
+    patterns = ["**Final Answer**", "Final Answer:", "Final Answer"]
+    final_answer_idx = -1
+    
+    for pattern in patterns:
+        final_answer_idx = output.find(pattern)
+        if final_answer_idx != -1:
+            break
     if final_answer_idx == -1:
         return None
 
@@ -83,30 +91,38 @@ def replace_code_tags(text, args):
     return processed_text
 
 
-def filter_code_solution(sample, args):
+def filter_code_solution(sample, args, rejected_samples):
     required_keys = ["predicted_answer", "generation", "problem"]
     for key in required_keys:
         if key not in sample:
+            rejected_samples["Key not found"].append(sample)
             return "Key not found: " + key
 
     # Make some initial filtering to speed up the next llm judgement stage
     if args.code_begin not in sample["generation"]:
+        rejected_samples["No code blocks found"].append(sample)
         return "No code blocks found"
     if not validate_code_execution(sample["generation"], args.code_begin.strip(), args.code_end.strip()):
+        rejected_samples["Incomplete code execution found"].append(sample)
         return "Incomplete code execution found"
     if "judgement" in sample and "judgement: no" in sample["judgement"].lower():
+        rejected_samples["Incorrect final answer"].append(sample)
         return "Incorrect final answer"
     if sample["generation"].find("\\boxed{") != -1 and sample["generation"].find("\\boxed{") < sample[
         "generation"
     ].find(args.code_begin):
+        rejected_samples["Boxed before code"].append(sample)
         return "Boxed before code"
-    if sample["generation"].find(sample["predicted_answer"]) != -1 and sample["generation"].find(
-        sample["predicted_answer"]
-    ) < sample["generation"].find(args.code_begin):
-        return "Predicted answer before code"
+    # the original filtering simply detects the answer before the code block, which results in a lot of false positives cases. 
+    # if sample["generation"].find(sample["predicted_answer"]) != -1 and sample["generation"].find(
+    #     sample["predicted_answer"]
+    # ) < sample["generation"].find(args.code_begin):
+    #     rejected_samples["Predicted answer before code"].append(sample)
+    #     return "Predicted answer before code"
 
     generation = cut_final_answer_part(sample["generation"])
     if generation is None:
+        rejected_samples["Final answer not found"].append(sample)
         return "Final answer not found"
 
     if args.new_code_begin and args.new_code_end:
@@ -119,21 +135,36 @@ def filter_code_solution(sample, args):
 
 def preprocess_code_judge(args):
     cnt = Counter()
+    rejected_samples = defaultdict(list)
+    
     with open(args.output_file, "w") as fout:
         for input_file in glob.glob(args.input_files):
             with open(input_file, "r") as fin:
                 for idx, line in enumerate(fin):
                     sample = json.loads(line)
-                    filt_reason = filter_code_solution(sample, args)
+                    filt_reason = filter_code_solution(sample, args, rejected_samples)
                     cnt[filt_reason] += 1
                     cnt["Total"] += 1
                     if filt_reason == "Accepted":
                         sample["original_index"] = idx
                         fout.write(json.dumps(sample) + "\n")
 
+    # Save rejected samples to separate JSON files
+    output_dir = os.path.dirname(args.output_file)
+    
+    for reason, samples in rejected_samples.items():
+        if samples:  # Only create file if there are samples
+            filename = f"rejected_output_{reason.lower().replace(' ', '_')}.json"
+            filepath = os.path.join(output_dir, filename)
+            with open(filepath, "w") as f:
+                json.dump(samples, f, indent=2)
+            print(f"Saved {len(samples)} rejected samples to {filepath}")
+
     print("Filtered samples:")
     for key, value in cnt.items():
         print(f"{key}: {value}")
+
+
 
 
 if __name__ == "__main__":
