@@ -20,23 +20,13 @@ import json
 import re
 import glob
 import argparse
-import sys
-from argparse import ArgumentParser
-from collections import defaultdict
-from pathlib import Path
+import os
 
 from typing import List, Dict, Optional
 from os import path
 from nemo_skills.evaluation.metrics.utils import is_correct_judgement
 from nemo_skills.evaluation.math_grader import extract_answer
-from nemo_skills.utils import setup_logging
 
-# Assuming the script is in recipes/openmathreasoning/scripts
-# and we need to import from nemo_skills
-# This adds the root of the project to the Python path
-# so that nemo_skills can be found
-sys.path.append(str(Path(__file__).resolve().parents[3]))
-setup_logging()
 
 
 def read_jsonl_file(file_path: str, key: Optional[str] = None) -> List[Dict]:
@@ -73,20 +63,21 @@ def select_best_summary(valid_summaries):
 def trim_reasoning_generation(reasoning_generation, start_tag, end_tag, strict_end_tag=False):    
     """Trim the thinking part of the original reasoning generation till the step with the rightmost boxed entry"""
     
-    # Find the start and end tags. If either is not found, return None
+    # Find the start and end tags. If either is not found, use the entire generation
     start_tag_position = reasoning_generation.find(start_tag)
     if start_tag_position == -1:
-        return None
-
-    end_tag_position = reasoning_generation.find(end_tag)
-    if end_tag_position == -1:
-        if strict_end_tag:
-            return None
-        else:
-            reasoning_generation = reasoning_generation + end_tag
-            reasoning_trace = reasoning_generation
+        # If no start tag found, wrap the entire generation with tags
+        reasoning_trace = start_tag + "\n" + reasoning_generation + "\n" + end_tag
     else:
-        reasoning_trace = reasoning_generation[:end_tag_position + len(end_tag)]
+        end_tag_position = reasoning_generation.find(end_tag)
+        if end_tag_position == -1:
+            if strict_end_tag:
+                return None
+            else:
+                reasoning_generation = reasoning_generation + end_tag
+                reasoning_trace = reasoning_generation
+        else:
+            reasoning_trace = reasoning_generation[:end_tag_position + len(end_tag)]
 
     # Extract the answer from the reasoning trace by searching for boxed entries
     answer_from_reasoning_trace = extract_answer(reasoning_trace)
@@ -105,8 +96,8 @@ def trim_reasoning_generation(reasoning_generation, start_tag, end_tag, strict_e
                 reasoning_trace[rightmost_match.end():].split("\n\n")[0]
             )
 
-            # If the end tag is not present, add it
-            if end_tag not in reasoning_trace:
+            # If we originally had tags and the end tag is not present, add it
+            if start_tag_position != -1 and end_tag not in reasoning_trace:
                 reasoning_trace += end_tag
                 
     return reasoning_trace
@@ -152,7 +143,7 @@ def format_reasoning_trace_with_summary(reasoning_file, summary_dir, start_tag, 
             # Select the best summary
             best_summary = select_best_summary(valid_summaries)                
             # Combine the trimmed reasoning trace with the best summary
-            combined_generation = trimmed_reasoning_trace + best_summary["generation"]
+            combined_generation = trimmed_reasoning_trace + "\n\nSummary:\n" + best_summary["generation"]
             # Update the reasoning instance
             reasoning_instance["generation"] = combined_generation
             # Add the instance to the list of formatted instances
@@ -170,10 +161,15 @@ def main():
     parser.add_argument("--start_tag", type=str, default="<think>", help="Start tag")
     parser.add_argument("--end_tag", type=str, default="</think>", help="End tag")
     parser.add_argument("--strict_end_tag", type=bool, default=False, help="Strict end tag")
-    args, _ = parser.parse_known_args()
+    args = parser.parse_args()
 
     formatted_instances = format_reasoning_trace_with_summary(
         args.reasoning_file, args.summary_dir, args.start_tag, args.end_tag, args.strict_end_tag)
+
+    # Create output directory if it doesn't exist
+    output_dir = os.path.dirname(args.output_file)
+    if output_dir and not os.path.exists(output_dir):
+        os.makedirs(output_dir, exist_ok=True)
 
     with open(args.output_file, "w") as f:
         for instance in formatted_instances:
