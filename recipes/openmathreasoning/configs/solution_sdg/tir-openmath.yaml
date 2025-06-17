@@ -17,7 +17,7 @@ initial_dependency: ${expname}-merge-data-qwen-instruct
 # Define judge model server parameters
 generate_kwargs: &generate_kwargs
   # Model to be used for answer judgement
-  model: gpt-4.1-mini # /trt_models/qwen2.5-32b-instruct
+  model: gpt-4.1 # /trt_models/qwen2.5-32b-instruct
   # Server type to launch the model
   server_type: openai # trtllm
   # NIM API endpoint
@@ -100,7 +100,7 @@ stages:
     input_dir: ${directories.step-2-fill-majority}
     dependencies:
       - fill_majority_answer
-    inline_args: "++prompt_template=qwen-instruct"
+    # inline_args: "++prompt_template=qwen-instruct"
     stage_kwargs:
       <<: *generate_kwargs
 
