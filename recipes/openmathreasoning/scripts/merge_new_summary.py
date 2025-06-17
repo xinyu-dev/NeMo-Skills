@@ -170,7 +170,7 @@ def main():
     parser.add_argument("--start_tag", type=str, default="<think>", help="Start tag")
     parser.add_argument("--end_tag", type=str, default="</think>", help="End tag")
     parser.add_argument("--strict_end_tag", type=bool, default=False, help="Strict end tag")
-    args = parser.parse_args()
+    args, _ = parser.parse_known_args()
 
     formatted_instances = format_reasoning_trace_with_summary(
         args.reasoning_file, args.summary_dir, args.start_tag, args.end_tag, args.strict_end_tag)
