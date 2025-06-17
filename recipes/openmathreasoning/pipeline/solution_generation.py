@@ -315,7 +315,8 @@ def merge_new_summaries(cluster, expname, run_after, stage_config, **kwargs):
     else:
         reasoning_file = stage_config["reasoning_file"]
         cmd = (
-            f"python /nemo_run/code/recipes/openmathreasoning/scripts/merge_new_summary.py "
+            f"echo 'Content of {script_path}' && cat {script_path} && "
+            f"python {script_path} "
             f"  --reasoning_file {reasoning_file} "
             f"  --summary_dir {summary_dir} "
             f"  --output_file {output_dir}/output.jsonl "

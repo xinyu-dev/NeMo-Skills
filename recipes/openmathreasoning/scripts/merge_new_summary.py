@@ -20,12 +20,23 @@ import json
 import re
 import glob
 import argparse
+import sys
+from argparse import ArgumentParser
+from collections import defaultdict
+from pathlib import Path
 
 from typing import List, Dict, Optional
 from os import path
 from nemo_skills.evaluation.metrics.utils import is_correct_judgement
-from nemo_skills.code_execution.math_grader import extract_answer
+from nemo_skills.evaluation.math_grader import extract_answer
+from nemo_skills.utils import setup_logging
 
+# Assuming the script is in recipes/openmathreasoning/scripts
+# and we need to import from nemo_skills
+# This adds the root of the project to the Python path
+# so that nemo_skills can be found
+sys.path.append(str(Path(__file__).resolve().parents[3]))
+setup_logging()
 
 
 def read_jsonl_file(file_path: str, key: Optional[str] = None) -> List[Dict]:
