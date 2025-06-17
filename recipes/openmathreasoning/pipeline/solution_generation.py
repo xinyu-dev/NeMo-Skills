@@ -298,6 +298,7 @@ def merge_new_summaries(cluster, expname, run_after, stage_config, **kwargs):
             cur_output_file = f"{output_dir}/output-rs{random_seed}.jsonl"
 
             cmd = (
+                f"mkdir -p {output_dir} && "
                 f"python /nemo_run/code/recipes/openmathreasoning/scripts/merge_new_summary.py "
                 f"  --reasoning_file {cur_reasoning_file} "
                 f"  --summary_dir {cur_summary_dir} "
@@ -315,6 +316,7 @@ def merge_new_summaries(cluster, expname, run_after, stage_config, **kwargs):
     else:
         reasoning_file = stage_config["reasoning_file"]
         cmd = (
+            f"mkdir -p {output_dir} && "
             f"python /nemo_run/code/recipes/openmathreasoning/scripts/merge_new_summary.py "
             f"  --reasoning_file {reasoning_file} "
             f"  --summary_dir {summary_dir} "
