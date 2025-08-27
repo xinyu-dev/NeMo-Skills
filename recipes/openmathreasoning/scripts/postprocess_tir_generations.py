@@ -153,6 +153,7 @@ def filter_code_solution(sample, args):
     # if generation is None:
     #     return "Final answer not found"
 
+    generation = sample["generation"]
     if args.new_code_begin and args.new_code_end:
         generation = replace_code_tags(generation, args)
     
