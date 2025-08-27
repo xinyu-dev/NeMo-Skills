@@ -60,6 +60,15 @@ def format_code_output(
         if execution_dict['stderr']:
             output += f"{execution_dict['stderr']}"
         output = f"{code_output_begin}{output}{code_output_end}{remaining_ce_string}"
+    
+    # NOTE: modified for harmony format
+    elif code_output_format == 'harmony':
+        output = ""
+        if execution_dict['stdout']:
+            output += f"{execution_dict['stdout']}"
+        if execution_dict['stderr']:
+            output += f"{execution_dict['stderr']}"
+        output = f"{code_output_begin}{output}{code_output_end}<|channel|>analysis<|message|>{remaining_ce_string}<|end|>"
     else:
         raise ValueError(f"Unknown code_output_format: {code_output_format}")
 

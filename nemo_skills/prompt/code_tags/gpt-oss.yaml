@@ -20,4 +20,4 @@ code_output_begin: "<|start|>python code to=assistant<|channel|>analysis<|messag
 code_output_end: "<|end|><|start|>assistant"
 # used to post-process code output
 # choices: llama, qwen
-code_output_format: "qwen"
+code_output_format: "gpt-oss"
