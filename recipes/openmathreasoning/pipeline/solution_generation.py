@@ -90,6 +90,11 @@ def postprocess_tir_generations(cluster, expname, run_after, stage_config, **kwa
     new_code_begin = stage_config.get('new_code_begin')
     new_code_end = stage_config.get('new_code_end')
 
+    # NOTE: for hamorny
+    output_begin = stage_config.get('output_begin')
+    output_end = stage_config.get('output_end')
+    is_harmony_format = stage_config.get('is_harmony_format', False)
+
     cmd = (
         f"python /nemo_run/code/recipes/openmathreasoning/scripts/postprocess_tir_generations.py "
         f"    --input_files '{input_dir}/output-rs*.jsonl' "
@@ -98,6 +103,9 @@ def postprocess_tir_generations(cluster, expname, run_after, stage_config, **kwa
         f"    --code_end '{code_end}' "
         f"    --new_code_begin '{new_code_begin}' "
         f"    --new_code_end '{new_code_end}' "
+        f"    --output_begin '{output_begin}' "
+        f"    --output_end '{output_end}' "
+        f"    {'--is_harmony_format' if is_harmony_format else ''} "
     )
     run_cmd(
         ctx=wrap_arguments(cmd),

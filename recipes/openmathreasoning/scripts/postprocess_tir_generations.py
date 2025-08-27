@@ -136,7 +136,15 @@ def filter_code_solution(sample, args):
     # Make some initial filtering to speed up the next llm judgement stage
     if args.code_begin not in sample["generation"]:
         return "No code blocks found"
-    if not validate_code_execution(sample["generation"], args.code_begin.strip(), args.code_end.strip()):
+    # NOTE: validate the code execution
+    if not validate_code_execution(
+        text=sample["generation"], 
+        code_begin=args.code_begin.strip(), 
+        code_end=args.code_end.strip(), 
+        output_begin=args.output_begin, 
+        output_end=args.output_end, 
+        is_harmony_format=args.is_harmony_format
+    ):
         return "Incomplete code execution found"
     if "judgement" in sample and "judgement: no" in sample["judgement"].lower():
         return "Incorrect final answer"
