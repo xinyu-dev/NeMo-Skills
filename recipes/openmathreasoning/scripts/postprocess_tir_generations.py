@@ -162,7 +162,9 @@ def filter_code_solution(sample, args):
     #     return "Final answer not found"
 
     generation = sample["generation"]
-    if args.new_code_begin and args.new_code_end:
+
+    # NOTE: fix the code tag replacement issue wiht harmony
+    if args.new_code_begin != "None" and args.new_code_end != "None":
         generation = replace_code_tags(generation, args)
     
     sample["generation"] = generation
