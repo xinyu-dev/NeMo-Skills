@@ -1,0 +1,90 @@
+cluster: local
+base_output_dir: /workspace/dsagent_detect_numeric_outliers # TODO: change this for each task!
+expname: gpt-oss-120b # TODO change this
+suffix: gpt-oss-120b # TODO change this
+
+
+# Input file for the first stage (generate_solutions)
+# This should be the output of the problem_generation.py pipeline
+input_file: ${base_output_dir}/input/input.jsonl
+# Number of solutions per each problem from the input file to generate
+num_random_seeds_to_generate: 1
+
+# Define judge model server parameters
+generate_kwargs: &generate_kwargs
+  model: gpt-5-chat # nvdev/openai/gpt-oss-120b 
+  server_type: azureopenai # openai
+  server_address: https://prod.api.nvidia.com/llm/v1/azure # https://integrate.api.nvidia.com/v1
+  # Number of generated solutions per problem to judge
+  num_random_seeds: ${num_random_seeds_to_generate}
+
+# Define the full sequence of stages for this mode
+pipeline_stages:
+  - generate_solutions          # Generate initial TIR solutions
+  - fill_majority_answer        # Fill missing ground truth answers if any
+  - judge_answers               # Judge correctness based on final answer
+  - postprocess_tir_generations  # Applies basic filtering and changes code blocks separator tags
+
+# Directory structure configuration
+directories:
+  step-1-generate-solutions: "${base_output_dir}/solution-sdg-${suffix}/step-1-generate-solutions"
+  step-2-fill-majority: "${base_output_dir}/solution-sdg-${suffix}/step-2-fill-majority"
+  step-3-judge-answers: "${base_output_dir}/solution-sdg-${suffix}/step-3-judge-answers"
+  step-4-postprocess-tir: "${base_output_dir}/solution-sdg-${suffix}/step-4-postprocess-tir"
+
+# Stage-specific configurations
+stages:
+  generate_solutions:
+    output_dir: ${directories.step-1-generate-solutions}
+    input_file: ${input_file}
+    # Arguments passed inside the generate context string (e.g., ++param=value)
+    inline_args: >-
+      ++inference.tokens_to_generate=120000
+      ++max_concurrent_requests=1024
+      ++prompt_config=dsagent_openai/tir-gpt-oss
+      ++prompt_format=ns
+      ++code_tags=gpt-oss
+      ++code_execution=true
+      ++use_completions_api=true
+      ++server.code_execution.max_code_executions=null
+      ++server.code_execution.add_remaining_code_executions=true
+      ++total_code_executions_in_prompt='[10, 30]'
+      ++override_max_code_executions=true
+    # Arguments passed as kwargs to the pipeline function (e.g. generate())
+    stage_kwargs:
+      with_sandbox: true
+      model: openai/gpt-oss-120b # /hf_models/gpt-oss-120b
+      server_type: vllm # vllm
+      # server_gpus: 2
+      # server_args: "--async-scheduling --max-num-seqs=1024"
+      server_address: http://localhost:8000/v1
+      num_random_seeds: ${num_random_seeds_to_generate}
+
+  fill_majority_answer:
+    output_dir: ${directories.step-2-fill-majority}
+    input_dir: ${directories.step-1-generate-solutions}
+    dependencies:
+      - generate_solutions
+
+  judge_answers:
+    output_dir: ${directories.step-3-judge-answers}
+    input_dir: ${directories.step-2-fill-majority}
+    inline_args: >-
+      ++prompt_config=judge/dsagent-eq
+    dependencies:
+      - fill_majority_answer
+    stage_kwargs: ${generate_kwargs}
+
+  postprocess_tir_generations:
+    output_dir: ${directories.step-4-postprocess-tir}
+    input_dir: ${directories.step-3-judge-answers}
+    code_begin: "<|start|>assistant<|channel|>analysis to=python code<|message|>"
+    code_end: "<|call|>" 
+    output_begin: "<|start|>python code to=assistant<|channel|>analysis<|message|>"
+    output_end: "<|end|><|start|>assistant"
+    is_harmony_format: true # whether is harmony text completion format
+    dependencies:
+      - judge_answers
+    # You can use CPU partition for this script, if available
+    # stage_kwargs:
+    #   partition: cpu

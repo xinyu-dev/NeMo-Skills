@@ -154,47 +154,28 @@ def batch_evaluate_results(
 
 
 def extract_answer(string: str, extract_from_boxed: bool = True, extract_regex: str = r"The final answer is (.+)$"):
-    """Extract Answer String from \\boxed expression or based on regex"""
-    if not extract_from_boxed:
-        match = re.search(extract_regex, string)
-        if match:
-            return match.group(1)
-        return None
+    """Extract everything from 'Answer: ' to the end, or return whole string if 'Answer: ' not found"""
+    # Look for "Answer: " pattern (case-insensitive)
 
-    if "\\boxed" not in string:
-        return None
+    # Attempt 1: try matching the harmony final answer pattern
+    # this must be placed first, since gpt-oss models like to mumble "final answer" in its planning process, 
+    # even though it hasn't generated the final answer yet. 
+    # must use escape to avoid regex injection!!
+    answer_pattern = re.escape("<|start|>assistant<|channel|>final<|message|>")
+    matches = list(re.finditer(answer_pattern, string, re.IGNORECASE))
+    match = matches[-1] if matches else None
+    if match:
+        # Extract everything from the start of "Answer: " to the end
+        return string[match.end():].strip()
 
-    idx = string.rfind("\\boxed")
-    if idx < 0:
-        idx = string.rfind("\\fbox")
-        if idx < 0:
-            return None
-
-    i = idx
-    right_brace_idx = None
-    num_left_braces_open = 0
-    while i < len(string):
-        if string[i] == "{":
-            num_left_braces_open += 1
-        if string[i] == "}":
-            num_left_braces_open -= 1
-            if num_left_braces_open == 0:
-                right_brace_idx = i
-                break
-        i += 1
-
-    if right_brace_idx is None:
-        retval = None
+    # Attempt 2:  try matching the final answer pattern
+    answer_pattern = r"Final answer:\s*"
+    match = re.search(answer_pattern, string, re.IGNORECASE)
+    if match:
+        # Extract everything from the start of "Answer: " to the end
+        return string[match.start():].strip()
     else:
-        retval = string[idx : right_brace_idx + 1]
-
-    if retval:
-        left = "\\boxed{"
-        try:
-            assert retval[: len(left)] == left
-            assert retval[-1] == "}"
-            return retval[len(left) : -1]
-        except AssertionError:
-            return None
-
-    return None
+        # If "Answer: " not found, return the whole input string or None
+        # if returnning None, then this trace will get filtered out as incorrect
+        # return string.strip()
+        return None

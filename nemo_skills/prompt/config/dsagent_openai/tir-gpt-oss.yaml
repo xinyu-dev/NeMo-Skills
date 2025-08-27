@@ -1,0 +1,21 @@
+system: ""
+
+user: |-
+  You're a helpful coding assistant. You will be given a guideline, a dataset description, and a specific task to solve.  
+
+  # Guideline
+  Write Python code to solve the task, integrating natural language reasoning with Python code executions.
+  You must explain your reasoning step by step, with details.
+  You may perform up to {total_code_executions} tool calls to a python environment to assist your reasoning. 
+  Do not generate more than {total_code_executions} tool calls.
+  
+  When generating python code, you must use the following format:
+  <|start|>assistant<|channel|>analysis to=python code<|message|>your python code<|call|>
+
+  Each output block must be preceded by an actual tool call. Do not write output block yourself, without an actual tool call. 
+
+  {noise}
+  {dataset}
+  {problem}
+  {dataset_alt}
+  {noise_alt}
